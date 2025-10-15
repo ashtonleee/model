@@ -14,6 +14,7 @@ from torch import nn
 
 # TODO:
 #   KV Cache!
+#   generation
 #   fuse QKV
 #   gradient clipping
 #   Configs
@@ -164,10 +165,11 @@ class Transformer(nn.Module):
         self.blocks = nn.ModuleList([AttentionBlock(self.d, self.H, self.MAXT, self.d_ff, self.p_drop) for _ in range(self.L)])
         self.RMS = nn.RMSNorm(self.d)
 
-    def forward(self, X):
+    def forward(self, X: torch.LongTensor):
         B, T = X.shape
         if T > self.MAXT: raise ValueError(f'too many tokens; max {self.MAXT} tokens')
         if X.dim() != 2: raise ValueError(f'wrong number of dimensions: requires 2, received {X.dim()}')
+        # might be redundant
         if X.dtype != torch.long: raise TypeError(f'input is wrong type: requires torch.long, received {X.dtype}')
         
         out = self.embedding(X)
@@ -176,3 +178,10 @@ class Transformer(nn.Module):
         out = self.RMS(out)
         out = out @ self.embedding.weight.T
         return out
+    
+    def generate(self, K, V):
+        # let's just do naive; K and V separate
+        # cache both K and V together?
+        # should have an EOS or something token recognizer to stop
+        # should transformer generate or language model? language model probably
+        pass
